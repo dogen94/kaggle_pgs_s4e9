@@ -1,6 +1,7 @@
 
 import pandas as pd
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
+
 
 def load_csv(file_path):
     """
@@ -30,7 +31,9 @@ def load_csv(file_path):
         print(f"An unexpected error occurred: {e}")
         return None
 
-def oh_encode(df, cols, encoder=OneHotEncoder(sparse=False)):
+
+def encode_col(df, col, encoder=OneHotEncoder(categories="auto")):
     # Example with scikit-learn
-    encoded_features = encoder.fit_transform(df[cols])
+    encoded_features = encoder.fit_transform(df[[col]])
+    df[col] = encoded_features.ravel()
     return df, encoder

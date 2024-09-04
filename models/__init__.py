@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 
-from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.model_selection import GridSearchCV
 import pickle
 
@@ -10,13 +10,14 @@ import pickle
 def train_gbtm(X,y, fname=None):
     # Define the parameter grid
     param_grid = {
-        'n_estimators': [50, 100, 200],
+        # 'max_leaf_nodes': [50, 100, 200],
         # 'learning_rate': [0.01, 0.1, 0.2],
-        'max_depth': [3, 5, 7],
+        'max_depth': [3, 5, 7, 10],
         # 'min_samples_split': [2, 5, 10],
-        # 'min_samples_leaf': [1, 2, 4]
+        'max_bins': [255, 64],
+        'min_samples_leaf': [5, 10, 20]
     }
-    model = GradientBoostingRegressor()
+    model = HistGradientBoostingRegressor()
     model.fit(X, y)
     best_model = model
     # grid_search = GridSearchCV(estimator=model, param_grid=param_grid,

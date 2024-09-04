@@ -4,6 +4,8 @@ import os
 
 # Third Party imports
 import pandas as pd
+import numpy as np
+
 # Evaluate the model
 from sklearn.metrics import mean_squared_error
 from sklearn.compose import ColumnTransformer
@@ -37,7 +39,7 @@ def genr8_gbtm():
     prices = data_pd.pop("price")
     preprocessor = ColumnTransformer(
         transformers=[
-            ('cat', OneHotEncoder(), ENCODE_COLS),
+            ('cat', OneHotEncoder(handle_unknown='ignore'), ENCODE_COLS),
             ('num', 'passthrough', SCALE_COLS)
         ])
     # Create a pipeline that preprocesses the data
@@ -61,28 +63,30 @@ def genr8_gbtm():
     test_ids = tdata_pd.pop("id")
     # Ignore engine for now
     tdata_pd.pop("engine")
-    tdata_pd_pp = pp_pipeline.transform(tdata_pd)
-    # Separate data
-    X_test = tdata_pd_pp.drop('price', axis=1)
-    prices_test = tdata_pd_pp.pop("price")
+    # # Separate data
+    # X_test = tdata_pd_pp.drop('price', axis=1)
+    # prices_test = tdata_pd_pp.pop("price")
     # Preprocess test data
-    data_pd_pp = pp_pipeline.transform(tdata_pd)
-    test_data_pp = data_pd_pp.toarray()
+    tdata_pd_pp = pp_pipeline.transform(tdata_pd)
+    test_data_pp = tdata_pd_pp.toarray()
     # Build df from transformed data
     feature_names = pp_pipeline.named_steps['preprocessor'].get_feature_names_out()
-    data_pp_df = pd.DataFrame(data_pp, columns=feature_names)
-    # Pop prices
-    prices_test = tdata_pd_pp["price"]
+    tdata_pp_df = pd.DataFrame(test_data_pp, columns=feature_names)
     # Test performance
-    prices_pred = model.predict(X_test)
-    mse = mean_squared_error(prices_test, prices_pred)
+    prices_pred = model.predict(tdata_pp_df)
+    # mse = mean_squared_error(prices_test, prices_pred)
+    submission = np.vstack([test_ids.to_numpy(), prices_pred])
+    submission_pd = pd.DataFrame(np.vstack([test_ids.to_numpy(), abs(prices_pred)]).T,
+                                 columns=["id", "price"])
+    submission_pd = submission_pd.convert_dtypes()
+    submission_pd.to_csv(os.path.join(DIRPATH, f"submissions/{mname}.csv"), index=False)
     # Save this to history
-    mhist_path = os.path.join(DIRPATH, f_mhist)
-    # Record model performance
-    with open(mhist_path, 'a') as file:
-        # Construct output
-        oline = f"{mname},{mse}\n"
-        file.write(oline)
+    # mhist_path = os.path.join(DIRPATH, f_mhist)
+    # # Record model performance
+    # with open(mhist_path, 'a') as file:
+    #     # Construct output
+    #     oline = f"{mname},{mse}\n"
+    #     file.write(oline)
 
 
 genr8_gbtm()

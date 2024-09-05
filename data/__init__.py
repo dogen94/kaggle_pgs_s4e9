@@ -1,6 +1,7 @@
 
 import pandas as pd
 import torch
+import torch.nn.functional as F
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
 
@@ -51,3 +52,22 @@ def embed_col(df, col, tokenizer, model, ntoken=768, fout=None):
     embeddings = outputs.last_hidden_state
     if fout:
         torch.save(embeddings, fout + ".pt")
+
+
+def compute_attention_weights(embeddings):
+    batch_size, seq_len, hidden_size = embeddings.shape
+    # Mean embedding for the batch
+    mean_embedding = embeddings.mean(dim=1)
+    
+    # Compute attention scores for each token
+    scores = torch.bmm(embeddings, mean_embedding.unsqueeze(2)).squeeze(2)
+    
+    # Apply softmax to get attention weights
+    attention_weights = F.softmax(scores, dim=1)
+    
+    return attention_weights
+
+def apply_attention_weights(embeddings, attention_weights):
+    # Compute weighted mean of token embeddings
+    weighted_embeddings = torch.bmm(attention_weights.unsqueeze(1), embeddings).squeeze(1)
+    return weighted_embeddings

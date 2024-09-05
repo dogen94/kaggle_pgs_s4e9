@@ -1,5 +1,6 @@
 
 import pandas as pd
+import torch
 from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
 
@@ -37,3 +38,16 @@ def encode_col(df, col, encoder=OneHotEncoder(categories="auto")):
     encoded_features = encoder.fit_transform(df[[col]])
     df[col] = encoded_features.ravel()
     return df, encoder
+
+
+def embed_col(df, col, tokenizer, model, ntoken=768, fout=None):
+    data = df.pop(col)
+    # Make token col names
+    colnames = [col + f"_{i}" for i in range(ntoken)]
+    # Generate a tokens and embed
+    tokens = tokenizer(data.to_list(), padding=True, truncation=True,
+                       return_tensors="pt")
+    outputs = model(**tokens)
+    embeddings = outputs.last_hidden_state
+    if fout:
+        torch.save(embeddings, fout + ".pt")

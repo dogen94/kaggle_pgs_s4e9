@@ -10,21 +10,22 @@ import pickle
 def train_gbtm(X,y, fname=None):
     # Define the parameter grid
     param_grid = {
-        # 'max_leaf_nodes': [50, 100, 200],
+        'max_iter': [500],
+        'max_leaf_nodes': [100],
         # 'learning_rate': [0.01, 0.1, 0.2],
-        'max_depth': [3, 5, 7, 10],
+        # 'max_depth': [13],
         # 'min_samples_split': [2, 5, 10],
-        'max_bins': [255, 64],
-        'min_samples_leaf': [5, 10, 20]
+        # 'max_bins': [255],
+        # 'min_samples_leaf': [5, 10, 20, 40]
     }
     model = HistGradientBoostingRegressor()
-    model.fit(X, y)
-    best_model = model
-    # grid_search = GridSearchCV(estimator=model, param_grid=param_grid,
-    #                            cv=5, scoring='neg_mean_squared_error',
-    #                            n_jobs=-1, verbose=1)
-    # grid_search.fit(X, y)
-    # best_model = grid_search.best_estimator_
+    # model.fit(X, y)
+    # best_model = model
+    grid_search = GridSearchCV(estimator=model, param_grid=param_grid,
+                               cv=2, scoring='neg_mean_squared_error',
+                               n_jobs=-1, verbose=1)
+    grid_search.fit(X, y)
+    best_model = grid_search.best_estimator_
     # Try saving model
     if fname:
         save_model(best_model, fname)

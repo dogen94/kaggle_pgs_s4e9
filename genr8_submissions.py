@@ -5,6 +5,8 @@ import os
 # Third Party imports
 import pandas as pd
 import numpy as np
+import torch
+from transformers import BertTokenizer, BertModel
 
 # Evaluate the model
 from sklearn.metrics import mean_squared_error
@@ -24,7 +26,7 @@ f_mhist = "submissions/mhist.txt"
 # Encode cols
 ENCODE_COLS = ["brand", "model", "fuel_type", "transmission",
                "ext_col", "int_col", "accident", "clean_title"]
-SCALE_COLS = ["model_year", "milage"]
+SCALE_COLS = ["model_year", "milage", "engine"]
 
 # Genr8 gbtm
 def genr8_gbtm():
@@ -63,6 +65,7 @@ def genr8_gbtm():
     test_ids = tdata_pd.pop("id")
     # Ignore engine for now
     tdata_pd.pop("engine")
+
     # # Separate data
     # X_test = tdata_pd_pp.drop('price', axis=1)
     # prices_test = tdata_pd_pp.pop("price")
@@ -89,4 +92,22 @@ def genr8_gbtm():
     #     file.write(oline)
 
 
-genr8_gbtm()
+# genr8_gbtm()
+
+def embed_data():
+    # Load training data
+    dpath = os.path.join(DIRPATH, "data/train.csv")
+    data_pd = data.load_csv(dpath)
+    # Tokenizer and embedding model
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    model = BertModel.from_pretrained('bert-base-uncased')
+    f_embed_train = os.path.join(DIRPATH, f"data/embed_train_data_engine")
+    data.embed_col(data_pd, "engine", tokenizer, model, fout=f_embed_train)
+    # Read in test data
+    tdpath = os.path.join(DIRPATH, "data/test.csv")
+    tdata_pd = data.load_csv(tdpath)
+    # Tokenizer and embedding model
+    f_embed_test = os.path.join(DIRPATH, f"data/embed_test_data_engine")
+    data.embed_col(data_pd, "engine", tokenizer, model, fout=f_embed_test)
+
+embed_data()

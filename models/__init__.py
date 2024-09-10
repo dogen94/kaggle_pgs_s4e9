@@ -7,18 +7,18 @@ import pickle
 
 
 # First try the naive GB tree model
-def train_gbtm(X,y, fname=None):
+def train_gbtm(X,y, fname=None, cats=None):
     # Define the parameter grid
     param_grid = {
         'max_iter': [500],
-        'max_leaf_nodes': [100],
+        # 'max_leaf_nodes': [11, 31, 50],
         # 'learning_rate': [0.01, 0.1, 0.2],
-        # 'max_depth': [13],
+        # 'max_depth': [10, 20, 30],
         # 'min_samples_split': [2, 5, 10],
         # 'max_bins': [255],
         # 'min_samples_leaf': [5, 10, 20, 40]
     }
-    model = HistGradientBoostingRegressor()
+    model = HistGradientBoostingRegressor(categorical_features=cats)
     # model.fit(X, y)
     # best_model = model
     grid_search = GridSearchCV(estimator=model, param_grid=param_grid,

@@ -1,4 +1,8 @@
+# Standard lib
+import regex as re
 
+# Third Party
+import numpy as np
 import pandas as pd
 import torch
 import torch.nn.functional as F
@@ -41,6 +45,56 @@ def encode_col(df, col, encoder=OneHotEncoder(categories="auto")):
     return df, encoder
 
 
+def _engine_regex(df):
+    # Regex match engine col
+    eng_regs = {
+        "engine_hp": r'(\d+\.\d+)HP',
+        "engine_l": r'(\d+\.\d+)L',
+        "engine_v": [r'V([0-9]+)', r'([0-9]+) Cylinder'],
+        "engine_e": r'(Electric)'
+    }
+    cols = [list(eng_regs.keys())]
+    for eng_str in df["engine"].to_list():
+        _cols = []
+        for key,reg in eng_regs.items():
+            # Try until match if list
+            if isinstance(reg, list):
+                for regi in reg:
+                    regs = re_search(regi, eng_str)
+                    if regs:
+                        break
+            else:
+                regs = re_search(reg, eng_str)
+            if regs:
+                _cols.append(regs.group(1))
+            else:
+                _cols.append(None)
+        cols.append(_cols)
+    return np.array(cols)
+
+
+def re_search(reg, string):
+    regc = re.compile(reg)
+    regs = re.search(regc, string)
+    return regs
+
+
+def regex_col(df, col):
+    # Get regex func
+    func = REGEX_FUNCS.get(col, False)
+    # Call
+    if func:
+        cols = func(df)
+    else:
+        raise NotImplementedError(f"No regex func for {col}")
+    # Get headers
+    heads = cols[0]
+    # Pop col and replace
+    _ = df.pop(col)
+    for i,head in enumerate(heads):
+        df[head] = cols[1:,i]
+    return df
+
 def embed_col(df, col, tokenizer, model, ntoken=768, fout=None):
     data = df.pop(col)
     # Make token col names
@@ -71,3 +125,8 @@ def apply_attention_weights(embeddings, attention_weights):
     # Compute weighted mean of token embeddings
     weighted_embeddings = torch.bmm(attention_weights.unsqueeze(1), embeddings).squeeze(1)
     return weighted_embeddings
+
+
+REGEX_FUNCS = {
+    "engine": _engine_regex,
+}
